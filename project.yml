@@ -16,30 +16,3 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.uland.smartcallguard
         INFOPLIST_FILE: App/Info.plist
         CODE_SIGN_STYLE: Automatic
-    dependencies:
-      - package: Protocols
-      - package: Models
-      - package: Core
-      - package: CallKitManager
-      - package: AudioEngineImpl
-      - package: LLMClientImpl
-      - package: IntentClassifierImpl
-      - package: CallOrchestratorImpl
-
-packages:
-  Protocols:
-    path: Packages/Protocols
-  Models:
-    path: Packages/Models
-  Core:
-    path: Packages/Core
-  CallKitManager:
-    path: Packages/CallKitManager
-  AudioEngineImpl:
-    path: Packages/AudioEngineImpl
-  LLMClientImpl:
-    path: Packages/LLMClientImpl
-  IntentClassifierImpl:
-    path: Packages/IntentClassifierImpl
-  CallOrchestratorImpl:
-    path: Packages/CallOrchestratorImpl

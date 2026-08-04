@@ -1,6 +1,4 @@
 import SwiftUI
-import Protocols
-import Core
 
 @main
 struct SmartCallGuardApp: App {
