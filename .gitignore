@@ -1,0 +1,23 @@
+# 敏感文件
+.env
+*.env
+.env.*
+
+# Xcode
+DerivedData/
+*.xcworkspace
+xcuserdata/
+
+# macOS
+.DS_Store
+Thumbs.db
+
+# 构建产物
+build/
+*.ipa
+*.app
+
+# IDE
+.vscode/
+.idea/
+

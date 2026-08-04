@@ -1,0 +1,79 @@
+name: Deploy IPA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Packages/**'
+      - 'App/**'
+      - 'project.yml'
+      - '.github/workflows/deploy-ipa.yml'
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    name: Build and Export IPA (Development)
+    runs-on: macos-26-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate --spec project.yml
+
+      - name: Resolve SPM Dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project SmartCallGuard.xcodeproj \
+            -scheme SmartCallGuard
+
+      - name: Setup Keychain (for automatic signing)
+        run: |
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+      - name: Archive
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          xcodebuild archive \
+            -project SmartCallGuard.xcodeproj \
+            -scheme SmartCallGuard \
+            -archivePath build/SmartCallGuard.xcarchive \
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_STYLE=Automatic \
+            -allowProvisioningUpdates \
+            -authenticationKeyIssuerID "$APPLE_ID" \
+            -authenticationKeyID "$APPLE_APP_SPECIFIC_PASSWORD"
+
+      - name: Export IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/SmartCallGuard.xcarchive \
+            -exportPath build/ \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates
+
+      - name: Verify IPA
+        run: |
+          ls -la build/SmartCallGuard.ipa
+          echo "IPA size: $(wc -c < build/SmartCallGuard.ipa) bytes"
+          if [ ! -s build/SmartCallGuard.ipa ]; then
+            echo "ERROR: IPA is empty!" >&2
+            exit 1
+          fi
+          echo "✅ IPA created successfully"
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartCallGuard.ipa
+          path: build/SmartCallGuard.ipa
+          retention-days: 7
