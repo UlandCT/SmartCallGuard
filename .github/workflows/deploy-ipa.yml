@@ -38,20 +38,17 @@ jobs:
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -t 3600 -u build.keychain
 
-      - name: Archive
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      - name: Archive (unsigned — Sideloadly signs locally)
         run: |
           xcodebuild archive \
             -project SmartCallGuard.xcodeproj \
             -scheme SmartCallGuard \
             -archivePath build/SmartCallGuard.xcarchive \
             -destination "generic/platform=iOS" \
-            CODE_SIGN_STYLE=Automatic \
-            -allowProvisioningUpdates \
-            -authenticationKeyIssuerID "$APPLE_ID" \
-            -authenticationKeyID "$APPLE_APP_SPECIFIC_PASSWORD"
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Export IPA
         run: |
