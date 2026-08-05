@@ -38,30 +38,36 @@ jobs:
           security unlock-keychain -p "" build.keychain
           security set-keychain-settings -t 3600 -u build.keychain
 
-      - name: Archive (unsigned — Sideloadly signs locally)
+      - name: Build (unsigned — Sideloadly signs locally)
         run: |
-          xcodebuild archive \
+          xcodebuild build \
             -project SmartCallGuard.xcodeproj \
             -scheme SmartCallGuard \
-            -archivePath build/SmartCallGuard.xcarchive \
-            -destination "generic/platform=iOS" \
-            CODE_SIGN_STYLE=Manual \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
-      - name: Export IPA
+      - name: Create IPA (manual — unsigned)
         run: |
-          xcodebuild -exportArchive \
-            -archivePath build/SmartCallGuard.xcarchive \
-            -exportPath build/ \
-            -exportOptionsPlist ExportOptions.plist \
-            -allowProvisioningUpdates
+          APP_PATH="build/Build/Products/Release-iphoneos/SmartCallGuard.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "ERROR: .app not found at $APP_PATH" >&2
+            find build -name "*.app" -type d 2>/dev/null || true
+            exit 1
+          fi
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          zip -r SmartCallGuard.ipa Payload/
+          echo "IPA size: $(wc -c < SmartCallGuard.ipa) bytes" 
 
       - name: Verify IPA
         run: |
-          ls -la build/SmartCallGuard.ipa
-          echo "IPA size: $(wc -c < build/SmartCallGuard.ipa) bytes"
-          if [ ! -s build/SmartCallGuard.ipa ]; then
+          ls -la SmartCallGuard.ipa
+          echo "IPA size: $(wc -c < SmartCallGuard.ipa) bytes"
+          if [ ! -s SmartCallGuard.ipa ]; then
             echo "ERROR: IPA is empty!" >&2
             exit 1
           fi
@@ -71,5 +77,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SmartCallGuard.ipa
-          path: build/SmartCallGuard.ipa
+          path: SmartCallGuard.ipa
           retention-days: 7
